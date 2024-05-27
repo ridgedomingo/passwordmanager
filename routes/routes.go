@@ -9,6 +9,8 @@ func NewRouter() *echo.Echo {
 	e := echo.New()
 
 	// Define your routes here
+	e.GET("/credential/:username", handlers.GetUserCredentials)
+
 	e.POST("/credential", handlers.SaveCredentials)
 	return e
 }
