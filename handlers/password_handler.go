@@ -16,10 +16,8 @@ import (
 
 	"github.com/ridgedomingo/go-exercises/pkg/generator"
 	"github.com/ridgedomingo/passwordmanager/internal/database"
+	"github.com/ridgedomingo/passwordmanager/internal/middleware"
 )
-
-// JWT username value
-// var jwtUsername string
 
 type PasswordGeneratorParams struct {
 	Username string `json:"userName"`
@@ -63,10 +61,9 @@ func encrypt(plaintext, salt string) (string, error) {
 func GetUserCredentials(c echo.Context) error {
 	username := c.Param("username")
 
-	// if username != jwtUsername {
-	// 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	// 	return
-	// }
+	if username != middleware.JwtUsername {
+		return c.String(http.StatusUnauthorized, "Unauthorized")
+	}
 
 	var userCredentials []database.UserCredentials
 	if username != "" {
@@ -110,9 +107,9 @@ func SaveCredentials(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Internal Server error")
 	}
 
-	// if params.Username != jwtUsername {
-	// 	return c.String(http.StatusUnauthorized, "Unauthorized")
-	// }
+	if params.Username != middleware.JwtUsername {
+		return c.String(http.StatusUnauthorized, "Unauthorized")
+	}
 
 	if params.Username == "" {
 		return c.String(http.StatusBadRequest, "Username is missing in the request body")
