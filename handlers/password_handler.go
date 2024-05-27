@@ -271,3 +271,20 @@ func hashPassword(password, salt string) string {
 	hasher.Write([]byte(password + salt))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 }
+
+// Goroutine function to check expired cache every 10 minutes
+func CacheCleanup() {
+	go func() {
+		for {
+			time.Sleep(10 * time.Minute)
+
+			cacheLock.Lock()
+			for key, entry := range cache {
+				if time.Now().After(entry.Expiration) {
+					delete(cache, key)
+				}
+			}
+			cacheLock.Unlock()
+		}
+	}()
+}

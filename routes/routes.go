@@ -9,6 +9,7 @@ import (
 func NewRouter() *echo.Echo {
 	e := echo.New()
 
+	handlers.CacheCleanup()
 	// Protected routes
 	r := e.Group("/user")
 	r.Use(middleware.AuthMiddleware)
