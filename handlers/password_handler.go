@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -22,6 +23,40 @@ import (
 type PasswordGeneratorParams struct {
 	Username string `json:"userName"`
 	Url      string `json:"url"`
+}
+
+// Cache structure
+type cacheEntry struct {
+	Value      interface{}
+	Expiration time.Time
+}
+
+// Caching global vars
+var (
+	cache     = make(map[string]cacheEntry)
+	cacheLock sync.RWMutex
+)
+
+// Setter for cache
+func setCache(key string, value interface{}) {
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	cache[key] = cacheEntry{
+		Value:      value,
+		Expiration: time.Now().Add(3600 * time.Second), // 1 hour expiration,
+	}
+}
+
+// Getter for cache
+func getCache(key string) (interface{}, bool) {
+	cacheLock.RLock()
+	defer cacheLock.RUnlock()
+	cachedData, ok := cache[key]
+	if !ok || time.Now().After(cachedData.Expiration) {
+		// Cache entry not found or expired
+		return nil, false
+	}
+	return cachedData.Value, ok
 }
 
 func encrypt(plaintext, salt string) (string, error) {
@@ -94,6 +129,15 @@ func GetUserCredentials(c echo.Context) error {
 			CreatedAt: uc.CreatedAt,
 		})
 	}
+
+	if cachedResponse, ok := getCache(username + "_credentials"); ok {
+		// w.Header().Set("Content-Type", "application/json")
+		// json.NewEncoder(w).Encode(cachedResponse)
+		return c.JSON(http.StatusOK, cachedResponse)
+	}
+
+	// Cache the response
+	setCache(username+"_credentials", response)
 	return c.JSON(http.StatusOK, response)
 }
 
