@@ -90,7 +90,7 @@ func encrypt(plaintext, salt string) (string, error) {
 	return returnString, returnError
 }
 
-// Function handler for GET /credential/:username
+// Function handler for GET /user/credential/:username
 //
 // This will retrieve the user's saved credentials by providing the username
 func GetUserCredentials(c echo.Context) error {
@@ -141,7 +141,7 @@ func GetUserCredentials(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// Function handler for POST /credential
+// Function handler for POST /user/credential
 //
 // Function handler that saves user credentials in database
 func SaveCredentials(c echo.Context) error {
@@ -191,6 +191,34 @@ func SaveCredentials(c echo.Context) error {
 	}
 
 	return c.String(http.StatusOK, "Credentials successfully saved")
+}
+
+// Function handler for DELETE /user/cache/{username}
+//
+// Deletes all saved cache by the passed username
+func DeleteCacheByUsername(c echo.Context) error {
+	username := c.Param("username")
+
+	if username != middleware.JwtUsername {
+		return c.String(http.StatusUnauthorized, "Unauthorized")
+	}
+	cacheLock.Lock()
+	delete(cache, username+"_credentials")
+	defer cacheLock.Unlock()
+
+	return c.String(http.StatusOK, "Cache deleted for user: "+username)
+
+}
+
+// Function handler for DELETE /user/cache
+//
+// Deletes all saved cache
+func DeleteCache(c echo.Context) error {
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	cache = make(map[string]cacheEntry)
+
+	return c.String(http.StatusOK, "Cache deleted")
 }
 
 func generateSalt(length int) (string, error) {

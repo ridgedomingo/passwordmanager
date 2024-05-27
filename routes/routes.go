@@ -12,8 +12,13 @@ func NewRouter() *echo.Echo {
 	// Protected routes
 	r := e.Group("/user")
 	r.Use(middleware.AuthMiddleware)
+
 	r.POST("/credential", handlers.SaveCredentials)
+
 	r.GET("/credential/:username", handlers.GetUserCredentials)
+
+	r.DELETE("/cache/:username", handlers.DeleteCacheByUsername)
+	r.DELETE("/cache", handlers.DeleteCache)
 
 	// public routes
 	e.POST("/generate-token", handlers.GenerateJWT)
