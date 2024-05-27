@@ -17,6 +17,8 @@ func NewRouter() *echo.Echo {
 
 	r.GET("/credential/:username", handlers.GetUserCredentials)
 
+	r.PUT("/extend-cache/:username", handlers.ExtendCacheExpiration)
+
 	r.DELETE("/cache/:username", handlers.DeleteCacheByUsername)
 	r.DELETE("/cache", handlers.DeleteCache)
 

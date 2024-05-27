@@ -221,6 +221,30 @@ func DeleteCache(c echo.Context) error {
 	return c.String(http.StatusOK, "Cache deleted")
 }
 
+// Function handler for PUT /user/extend-cache/{username}
+//
+// Extends the saved cache of a user by 30 mins
+func ExtendCacheExpiration(c echo.Context) error {
+	username := c.Param("username")
+
+	if username != middleware.JwtUsername {
+		return c.String(http.StatusUnauthorized, "Unauthorized")
+	}
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+
+	entry, ok := cache[username+"_credentials"]
+	if !ok {
+		return c.String(http.StatusInternalServerError, "Cache not found")
+	}
+
+	entry.Expiration = time.Now().Add(30 * time.Minute)
+	cache[username+"_credentials"] = entry
+
+	return c.String(http.StatusOK, "Cache extended until "+cache[username+"_credentials"].Expiration.Format("Jan 02, 2006 03:04:05 PM"))
+
+}
+
 func generateSalt(length int) (string, error) {
 	// Calculate the number of bytes needed for the salt
 	numBytes := length * 3 / 4 // Base64 encoding expands 3 bytes to 4 characters
